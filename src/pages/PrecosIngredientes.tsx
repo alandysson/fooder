@@ -16,6 +16,14 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 import { PrecoIngredienteForm } from "@/components/Forms/PrecoIngredienteForm";
 import { useToast } from "@/hooks/use-toast";
 import { useFetchPrecos } from "@/hooks/api/useFetchPrecos";
@@ -26,8 +34,9 @@ const PrecosIngredientes = () => {
   const [open, setOpen] = useState(false);
   const [editingPreco, setEditingPreco] = useState<any>(null);
   const [deleteId, setDeleteId] = useState<number | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
   const { toast } = useToast();
-  const { precos } = useFetchPrecos();
+  const { precos, totalPages } = useFetchPrecos(currentPage);
   const queryClient = useQueryClient();
 
   const mutation = useMutation({
@@ -147,6 +156,48 @@ const PrecosIngredientes = () => {
                 </TableBody>
               </Table>
             </div>
+            {totalPages > 1 && (
+              <div className="mt-4">
+                <Pagination>
+                  <PaginationContent>
+                    <PaginationItem>
+                      <PaginationPrevious
+                        href="#"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          if (currentPage > 1) setCurrentPage(currentPage - 1);
+                        }}
+                        className={currentPage === 1 ? "pointer-events-none opacity-50" : ""}
+                      />
+                    </PaginationItem>
+                    {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                      <PaginationItem key={page}>
+                        <PaginationLink
+                          href="#"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            setCurrentPage(page);
+                          }}
+                          isActive={currentPage === page}
+                        >
+                          {page}
+                        </PaginationLink>
+                      </PaginationItem>
+                    ))}
+                    <PaginationItem>
+                      <PaginationNext
+                        href="#"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          if (currentPage < totalPages) setCurrentPage(currentPage + 1);
+                        }}
+                        className={currentPage === totalPages ? "pointer-events-none opacity-50" : ""}
+                      />
+                    </PaginationItem>
+                  </PaginationContent>
+                </Pagination>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>

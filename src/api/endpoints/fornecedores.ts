@@ -10,9 +10,9 @@ export const createFornecedor = async (values: any) => {
   });
 };
 
-export const getFornecedors = async () => {
+export const getFornecedors = async (page: number) => {
   return await request({
-    endpoint: `suppliers`,
+    endpoint: `suppliers?page=${page}`,
     method: "GET",
   });
 };

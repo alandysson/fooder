@@ -10,9 +10,9 @@ export const createInsumo = async (values: any) => {
   });
 };
 
-export const getInsumos = async () => {
+export const getInsumos = async (page: number) => {
   return await request({
-    endpoint: `ingredients`,
+    endpoint: `ingredients?page=${page}`,
     method: "GET",
   });
 };

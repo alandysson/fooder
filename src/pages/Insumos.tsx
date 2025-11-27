@@ -17,6 +17,14 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 import { InsumoForm } from "@/components/Forms/InsumoForm";
 import { useToast } from "@/hooks/use-toast";
 import { useFetchInsumos } from "@/hooks/api/useFetchInsumos";
@@ -27,8 +35,9 @@ const Insumos = () => {
   const [open, setOpen] = useState(false);
   const [editingInsumo, setEditingInsumo] = useState<any>(null);
   const [deleteId, setDeleteId] = useState<number | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
   const { toast } = useToast();
-  const { insumos } = useFetchInsumos();
+  const { insumos, totalPages } = useFetchInsumos(currentPage);
   const queryClient = useQueryClient();
 
   const mutation = useMutation({
@@ -120,8 +129,6 @@ const Insumos = () => {
                     <TableHead>Nome</TableHead>
                     <TableHead>Unidade</TableHead>
                     <TableHead>Estoque</TableHead>
-                    <TableHead>Preço Unit.</TableHead>
-                    <TableHead>Fornecedor</TableHead>
                     <TableHead>Validade</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead className="text-right">Ações</TableHead>
@@ -135,8 +142,6 @@ const Insumos = () => {
                         <TableCell className="font-medium">{insumo.name}</TableCell>
                         <TableCell>{insumo.unit}</TableCell>
                         <TableCell>{Number(insumo.min_stock).toFixed(1)}</TableCell>
-                        <TableCell>R$ {0}</TableCell>
-                        <TableCell>-</TableCell>
                         <TableCell>{new Date().toLocaleDateString("pt-BR")}</TableCell>
                         <TableCell>
                           <Badge variant={status.variant}>{status.label}</Badge>
@@ -157,6 +162,48 @@ const Insumos = () => {
                 </TableBody>
               </Table>
             </div>
+            {totalPages > 1 && (
+              <div className="mt-4">
+                <Pagination>
+                  <PaginationContent>
+                    <PaginationItem>
+                      <PaginationPrevious
+                        href="#"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          if (currentPage > 1) setCurrentPage(currentPage - 1);
+                        }}
+                        className={currentPage === 1 ? "pointer-events-none opacity-50" : ""}
+                      />
+                    </PaginationItem>
+                    {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                      <PaginationItem key={page}>
+                        <PaginationLink
+                          href="#"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            setCurrentPage(page);
+                          }}
+                          isActive={currentPage === page}
+                        >
+                          {page}
+                        </PaginationLink>
+                      </PaginationItem>
+                    ))}
+                    <PaginationItem>
+                      <PaginationNext
+                        href="#"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          if (currentPage < totalPages) setCurrentPage(currentPage + 1);
+                        }}
+                        className={currentPage === totalPages ? "pointer-events-none opacity-50" : ""}
+                      />
+                    </PaginationItem>
+                  </PaginationContent>
+                </Pagination>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>

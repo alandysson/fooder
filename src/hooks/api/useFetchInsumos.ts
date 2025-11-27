@@ -1,20 +1,18 @@
 import { getInsumos } from "@/api/endpoints/insumos";
 import { useQuery } from "@tanstack/react-query";
 
-export const useFetchInsumos = () => {
+export const useFetchInsumos = (page: number) => {
   const { data, isFetching, isError, error } = useQuery({
-    queryKey: ["insumos"],
-    queryFn: () => getInsumos(),
+    queryKey: ["insumos", page],
+    queryFn: () => getInsumos(page),
     refetchOnWindowFocus: false,
   });
 
   return {
     insumos: data?.data || [],
-    // totalRecords: data?.paginator.totalRecords || 0,
-    // totalPages: data?.paginator.totalPages || 0,
-    // currentPage: data?.paginator.currentPage || 0,
-    // isFetching,
-    // isError,
-    // error: error as any,
+    totalPages: data?.last_page || 0,
+    isFetching,
+    isError,
+    error: error as any,
   };
 };

@@ -10,9 +10,9 @@ export const createPreco = async (values: any) => {
   });
 };
 
-export const getPrecos = async () => {
+export const getPrecos = async (page: number) => {
   return await request({
-    endpoint: `ingredient-prices`,
+    endpoint: `ingredient-prices?page=${page}`,
     method: "GET",
   });
 };

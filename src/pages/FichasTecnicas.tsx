@@ -6,14 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Plus, Search, FileText, Pencil, Trash2 } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -24,75 +17,55 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 import { FichaTecnicaForm } from "@/components/Forms/FichaTecnicaForm";
 import { useToast } from "@/hooks/use-toast";
-
-const initialFichas = [
-  {
-    id: 1,
-    nome: "Massa ao Molho Vermelho",
-    rendimento: 4,
-    custoTotal: 18.5,
-    precoVenda: 42.0,
-    margemLucro: 56.0,
-    ingredientes: 8,
-    tempoPreparo: 30,
-    modoPreparo: "Cozinhe o macarrão, refogue o molho e misture.",
-  },
-  {
-    id: 2,
-    nome: "Risoto de Funghi",
-    rendimento: 2,
-    custoTotal: 32.8,
-    precoVenda: 78.0,
-    margemLucro: 58.0,
-    ingredientes: 12,
-    tempoPreparo: 45,
-    modoPreparo: "Refogue o arroz, adicione o caldo aos poucos.",
-  },
-  {
-    id: 3,
-    nome: "Filé à Parmegiana",
-    rendimento: 1,
-    custoTotal: 25.4,
-    precoVenda: 65.0,
-    margemLucro: 60.9,
-    ingredientes: 10,
-    tempoPreparo: 40,
-    modoPreparo: "Empane o filé, frite e finalize com molho e queijo.",
-  },
-  {
-    id: 4,
-    nome: "Salada Caesar",
-    rendimento: 2,
-    custoTotal: 12.3,
-    precoVenda: 32.0,
-    margemLucro: 61.6,
-    ingredientes: 6,
-    tempoPreparo: 15,
-    modoPreparo: "Misture os ingredientes frescos e adicione o molho.",
-  },
-];
+import { useFetchFichas } from "@/hooks/api/useFetchFichas";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { deleteFichas } from "@/api/endpoints/fichastecnicas";
 
 const FichasTecnicas = () => {
-  const [fichas, setFichas] = useState(initialFichas);
   const [open, setOpen] = useState(false);
   const [editingFicha, setEditingFicha] = useState<any>(null);
   const [deleteId, setDeleteId] = useState<number | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const { fichas, totalPages } = useFetchFichas(currentPage);
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   const handleEdit = (ficha: any) => {
     setEditingFicha(ficha);
     setOpen(true);
   };
 
+  const mutation = useMutation({
+    mutationFn: deleteFichas,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["fichas"] });
+      toast({
+        title: "Ficha técnica excluída",
+        description: "A ficha técnica foi removida com sucesso.",
+      });
+      setDeleteId(null);
+    },
+    onError: () => {
+      toast({
+        title: "Erro ao excluir ficha técnica",
+        description: "Ocorreu um erro ao tentar excluir a ficha técnica.",
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleDelete = (id: number) => {
-    setFichas(fichas.filter((f) => f.id !== id));
-    setDeleteId(null);
-    toast({
-      title: "Ficha técnica excluída",
-      description: "A ficha técnica foi removida com sucesso.",
-    });
+    mutation.mutate(id);
   };
 
   const handleCloseDialog = () => {
@@ -150,30 +123,36 @@ const FichasTecnicas = () => {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Nome do Prato</TableHead>
-                    <TableHead>Rendimento</TableHead>
+                    <TableHead>SKU</TableHead>
                     <TableHead>Ingredientes</TableHead>
-                    <TableHead>Custo Total</TableHead>
                     <TableHead>Preço de Venda</TableHead>
-                    <TableHead>Margem de Lucro</TableHead>
+                    <TableHead>Status</TableHead>
                     <TableHead className="text-right">Ações</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {fichas.map((ficha) => (
                     <TableRow key={ficha.id}>
-                      <TableCell className="font-medium">{ficha.nome}</TableCell>
-                      <TableCell>{ficha.rendimento} porções</TableCell>
+                      <TableCell className="font-medium">{ficha?.name}</TableCell>
+                      <TableCell className="text-muted-foreground">{ficha?.sku || "-"}</TableCell>
                       <TableCell>
-                        <Badge variant="secondary">{ficha.ingredientes} itens</Badge>
+                        <Badge variant="secondary">{ficha.recipe?.items?.length} itens</Badge>
                       </TableCell>
-                      <TableCell>R$ {ficha.custoTotal.toFixed(2)}</TableCell>
-                      <TableCell>R$ {ficha.precoVenda.toFixed(2)}</TableCell>
-                      <TableCell>
-                        <span className="font-semibold text-success">{ficha.margemLucro.toFixed(1)}%</span>
+                      <TableCell>R$ {Number(ficha.price).toFixed(2)}</TableCell>
+                      <TableCell className="font-medium">
+                        <div className="flex items-center gap-2">
+                          <Badge variant={ficha.is_active ? "default" : "outline"} className="text-xs">
+                            {ficha.is_active ? "Ativo" : "Inativo"}
+                          </Badge>
+                        </div>
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
-                          <Button variant="ghost" size="icon" onClick={() => handleEdit(ficha)}>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleEdit({ ...ficha, ingredients: ficha.recipe?.items })}
+                          >
                             <Pencil className="h-4 w-4" />
                           </Button>
                           <Button variant="ghost" size="icon" onClick={() => setDeleteId(ficha.id)}>
@@ -186,6 +165,48 @@ const FichasTecnicas = () => {
                 </TableBody>
               </Table>
             </div>
+            {totalPages > 1 && (
+              <div className="mt-4">
+                <Pagination>
+                  <PaginationContent>
+                    <PaginationItem>
+                      <PaginationPrevious
+                        href="#"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          if (currentPage > 1) setCurrentPage(currentPage - 1);
+                        }}
+                        className={currentPage === 1 ? "pointer-events-none opacity-50" : ""}
+                      />
+                    </PaginationItem>
+                    {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                      <PaginationItem key={page}>
+                        <PaginationLink
+                          href="#"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            setCurrentPage(page);
+                          }}
+                          isActive={currentPage === page}
+                        >
+                          {page}
+                        </PaginationLink>
+                      </PaginationItem>
+                    ))}
+                    <PaginationItem>
+                      <PaginationNext
+                        href="#"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          if (currentPage < totalPages) setCurrentPage(currentPage + 1);
+                        }}
+                        className={currentPage === totalPages ? "pointer-events-none opacity-50" : ""}
+                      />
+                    </PaginationItem>
+                  </PaginationContent>
+                </Pagination>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>

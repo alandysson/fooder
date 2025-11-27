@@ -28,8 +28,8 @@ interface PrecoIngredienteFormProps {
 
 export function PrecoIngredienteForm({ onSuccess, initialData }: PrecoIngredienteFormProps) {
   const { toast } = useToast();
-  const { fornecedores } = useFetchFornecedores();
-  const { insumos } = useFetchInsumos();
+  const { fornecedores } = useFetchFornecedores(1);
+  const { insumos } = useFetchInsumos(1);
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: initialData

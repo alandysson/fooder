@@ -1,15 +1,16 @@
-import { getPrecos } from "@/api/endpoints/precos";
+import { getFichas } from "@/api/endpoints/fichastecnicas";
 import { useQuery } from "@tanstack/react-query";
 
-export const useFetchPrecos = (page: number) => {
+export const useFetchFichas = (page: number) => {
   const { data, isFetching, isError, error } = useQuery({
-    queryKey: ["precos", page],
-    queryFn: () => getPrecos(page),
+    queryKey: ["fichas", page],
+    queryFn: () => getFichas(page),
     refetchOnWindowFocus: false,
   });
 
+  console.log(data);
   return {
-    precos: data?.data || [],
+    fichas: data?.data || [],
     totalPages: data?.last_page || 0,
     isFetching,
     isError,
