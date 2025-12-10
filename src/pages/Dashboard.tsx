@@ -3,7 +3,7 @@ import { StatsCard } from "@/components/Dashboard/StatsCard";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
-import { DollarSign, TrendingUp, Package, AlertTriangle, AlertCircle, Clock } from "lucide-react";
+import { DollarSign, TrendingUp, Package, AlertTriangle, Clock } from "lucide-react";
 import {
   BarChart,
   Bar,
@@ -15,6 +15,9 @@ import {
   LineChart,
   Line,
 } from "recharts";
+import { useFetchPontoDeEquilibrio } from "@/hooks/api/useFetchPontoDeEquilibrio";
+import { useFetchAlertaPereciveis } from "@/hooks/api/useFetchAlertaPereciveis";
+import { TrafficFlowHeatmap } from "@/components/Dashboard/TrafficFlowHeatmap";
 
 const salesData = [
   { name: "Seg", vendas: 4500 },
@@ -34,9 +37,11 @@ const costData = [
 ];
 
 const Dashboard = () => {
-  // Ponto de equilíbrio
-  const pontoEquilibrio = 2000;
-  const faturamentoAtual = 1650;
+  const { pontoDeEquilibrio } = useFetchPontoDeEquilibrio(new Date().toISOString().split("T")[0], 2000);
+  const { alertaPereciveis } = useFetchAlertaPereciveis(48);
+  const { quantity, unit, ingredient } = alertaPereciveis[0];
+  const pontoEquilibrio = pontoDeEquilibrio?.breakeven || 1;
+  const faturamentoAtual = pontoDeEquilibrio?.revenue || 0;
   const percentualAtingido = (faturamentoAtual / pontoEquilibrio) * 100;
   const faltam = pontoEquilibrio - faturamentoAtual;
 
@@ -54,9 +59,12 @@ const Dashboard = () => {
             <AlertTriangle className="h-4 w-4 text-destructive" />
             <AlertTitle className="text-destructive">Atenção: Produtos Expirando</AlertTitle>
             <AlertDescription className="text-muted-foreground">
-              <strong className="text-foreground">3kg de salmão</strong> expiram em{" "}
-              <strong className="text-foreground">48 horas</strong>. Previsão de uso: apenas 1kg. Considere
-              criar uma promoção "Prato do Dia" para evitar desperdício.
+              <strong className="text-foreground">
+                {quantity}
+                {unit} de {ingredient}
+              </strong>{" "}
+              expiram em <strong className="text-foreground">48 horas</strong>. Considere criar uma promoção
+              "Prato do Dia" para evitar desperdício.
             </AlertDescription>
           </Alert>
 
@@ -68,11 +76,15 @@ const Dashboard = () => {
                 <div>
                   <p className="text-sm text-muted-foreground">
                     Meta:{" "}
-                    <strong className="text-foreground">R$ {pontoEquilibrio.toLocaleString("pt-BR")}</strong>
+                    <strong className="text-foreground">
+                      R$ {pontoDeEquilibrio?.revenue?.toLocaleString("pt-BR")}
+                    </strong>
                   </p>
                   <p className="text-sm text-muted-foreground">
                     Atual:{" "}
-                    <strong className="text-foreground">R$ {faturamentoAtual.toLocaleString("pt-BR")}</strong>
+                    <strong className="text-foreground">
+                      R$ {pontoDeEquilibrio?.breakeven?.toLocaleString("pt-BR")}
+                    </strong>
                   </p>
                 </div>
                 <div className="text-right">
@@ -88,73 +100,19 @@ const Dashboard = () => {
           </Alert>
         </div>
 
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-          <StatsCard
-            title="Faturamento Mensal"
-            value="R$ 127.450"
-            icon={DollarSign}
-            trend={{ value: "12.5%", isPositive: true }}
-            variant="success"
-          />
-          <StatsCard
-            title="Margem de Lucro"
-            value="58.3%"
-            icon={TrendingUp}
-            trend={{ value: "3.2%", isPositive: true }}
-            variant="success"
-          />
-          <StatsCard title="Itens em Estoque" value="248" icon={Package} variant="default" />
-          <StatsCard title="Produtos Vencendo" value="12" icon={AlertTriangle} variant="warning" />
-        </div>
-
-        <div className="grid gap-6 md:grid-cols-2">
-          <Card className="shadow-md">
-            <CardHeader>
-              <CardTitle className="text-foreground">Vendas da Semana</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={salesData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                  <XAxis dataKey="name" stroke="hsl(var(--muted-foreground))" />
-                  <YAxis stroke="hsl(var(--muted-foreground))" />
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: "hsl(var(--card))",
-                      border: "1px solid hsl(var(--border))",
-                      borderRadius: "var(--radius)",
-                    }}
-                  />
-                  <Bar dataKey="vendas" fill="hsl(var(--primary))" radius={[8, 8, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
-
-          <Card className="shadow-md">
-            <CardHeader>
-              <CardTitle className="text-foreground">Custos vs Receita</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ResponsiveContainer width="100%" height={300}>
-                <LineChart data={costData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                  <XAxis dataKey="name" stroke="hsl(var(--muted-foreground))" />
-                  <YAxis stroke="hsl(var(--muted-foreground))" />
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: "hsl(var(--card))",
-                      border: "1px solid hsl(var(--border))",
-                      borderRadius: "var(--radius)",
-                    }}
-                  />
-                  <Line type="monotone" dataKey="receita" stroke="hsl(var(--success))" strokeWidth={2} />
-                  <Line type="monotone" dataKey="custo" stroke="hsl(var(--destructive))" strokeWidth={2} />
-                </LineChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
-        </div>
+        <Card className="shadow-md">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-foreground">
+              <Clock className="h-5 w-5 text-primary" />
+              Fluxo de Vendas
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%">
+              <TrafficFlowHeatmap />
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
       </div>
     </MainLayout>
   );

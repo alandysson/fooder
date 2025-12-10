@@ -19,6 +19,7 @@ import {
 import {
   Pagination,
   PaginationContent,
+  PaginationEllipsis,
   PaginationItem,
   PaginationLink,
   PaginationNext,
@@ -29,6 +30,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useFetchPrecos } from "@/hooks/api/useFetchPrecos";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { deletePreco } from "@/api/endpoints/precos";
+import { usePagination } from "@/hooks/use-pagination";
 
 const PrecosIngredientes = () => {
   const [open, setOpen] = useState(false);
@@ -37,6 +39,7 @@ const PrecosIngredientes = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const { toast } = useToast();
   const { precos, totalPages } = useFetchPrecos(currentPage);
+  const paginationRange = usePagination({ currentPage, totalPages });
   const queryClient = useQueryClient();
 
   const mutation = useMutation({
@@ -170,18 +173,22 @@ const PrecosIngredientes = () => {
                         className={currentPage === 1 ? "pointer-events-none opacity-50" : ""}
                       />
                     </PaginationItem>
-                    {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                      <PaginationItem key={page}>
-                        <PaginationLink
-                          href="#"
-                          onClick={(e) => {
-                            e.preventDefault();
-                            setCurrentPage(page);
-                          }}
-                          isActive={currentPage === page}
-                        >
-                          {page}
-                        </PaginationLink>
+                    {paginationRange.map((pageNumber, index) => (
+                      <PaginationItem key={index}>
+                        {pageNumber === "ellipsis" ? (
+                          <PaginationEllipsis />
+                        ) : (
+                          <PaginationLink
+                            href="#"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              setCurrentPage(pageNumber as number);
+                            }}
+                            isActive={currentPage === pageNumber}
+                          >
+                            {pageNumber}
+                          </PaginationLink>
+                        )}
                       </PaginationItem>
                     ))}
                     <PaginationItem>
